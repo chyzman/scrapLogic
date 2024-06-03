@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "scraplogic",
+  "version": "${version}",
+
+  "name": "scrapLogic",
+  "description": "",
+  "authors": [
+    "chyzman"
+  ],
+  "contact": {
+    "repo": "https://github.com/chyzman/scrapLogic"
+  },
+
+  "license": "MIT",
+  "icon": "assets/scraplogic/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "com.chyzman.scraplogic.client.ScrapLogicClient"
+    ],
+    "main": [
+      "com.chyzman.scraplogic.ScrapLogic"
+    ]
+  },
+
+  "mixins": [
+    "scraplogic.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric": "*",
+    "minecraft": ">=1.20.5"
+  },
+
+  "custom": {
+    "cardinal-components": [
+      "scrap_logic:chunk"
+    ]
+  },
+  "accessWidener" : "scraplogic.accesswidener"
+}

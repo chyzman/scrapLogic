@@ -1,0 +1,168 @@
+plugins {
+    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven { url "https://maven.wispforest.io" }
+    maven { url "https://api.modrinth.com/maven" }
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.ladysnake.org/releases" }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    modImplementation include("dev.onyxstudios.cardinal-components-api:cardinal-components-chunk:${project.cardinal_components_version}")
+
+    annotationProcessor modImplementation("io.wispforest:owo-lib:${project.owo_version}") {
+        exclude group: "net.fabricmc.fabric-api"
+    }
+
+    include("io.wispforest:owo-sentinel:${project.owo_version}")
+
+    modLocalRuntime "maven.modrinth:ok-boomer:0.1.3+1.20.5"
+    modLocalRuntime "maven.modrinth:wearthat:1.19.3-1.20.X_1.0.0"
+
+    modLocalRuntime "me.shedaniel:RoughlyEnoughItems-fabric:15.0.728"
+
+    modLocalRuntime "maven.modrinth:modmenu:10.0.0-beta.1"
+
+    modLocalRuntime "maven.modrinth:sodium:mc1.20.6-0.5.8"
+    modLocalRuntime "maven.modrinth:indium:1.0.30+mc1.20.4"
+    modLocalRuntime "maven.modrinth:lithium:mc1.20.6-0.12.3"
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "minecraft_version", project.minecraft_version
+    inputs.property "loader_version", project.loader_version
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version,
+                "minecraft_version": project.minecraft_version,
+                "loader_version": project.loader_version
+    }
+}
+
+def targetJavaVersion = 21
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        it.options.release.set(targetJavaVersion)
+    }
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    withSourcesJar()
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/scrapLogic.accesswidener")
+
+    var username = "chyzman"
+    var uuid = "09de8a6d86bf4c15bb93ce3384ce4e96"
+    var renderDocPath = "C:\\Program Files\\RenderDoc\\renderdoc.dll"
+    String javaAgent = null;
+
+    try {
+        afterEvaluate {
+            def mixinDep = this.configurations.compileClasspath
+                    .allDependencies
+                    .findAll { it.name == "sponge-mixin" }
+                    .first()
+
+            if (mixin != null) {
+                javaAgent = this.configurations.compileClasspath.files(mixinDep).first().path;
+
+                println(javaAgent)
+
+                println("[Info]: Mixin Hotswap Run should be working")
+            } else {
+                println("[Warning]: Unable to locate file path for Mixin Jar, HotSwap Run will not work!!!")
+            }
+        }
+    } catch (Exception e) {
+        println("[Error]: MixinHotswap Run had a issue!")
+        e.printStackTrace()
+    }
+
+    runs {
+        client {
+            client()
+            ideConfigGenerated true
+            name "Minecraft Client (Chyzman)"
+            programArgs("--username", username)
+            programArgs("--uuid", uuid)
+            vmArg("-javaagent:\"" + javaAgent + "\"")
+        }
+        altClient {
+            client()
+            ideConfigGenerated true
+            name "Minecraft Client (Alt)"
+            runDir "run_alt"
+            programArgs("--username", "chyzalt")
+            vmArg("-javaagent:\"" + javaAgent + "\"")
+        }
+        mixinDump {
+            client()
+            ideConfigGenerated true
+            name "Minecraft Client (Mixin Dump)"
+            programArgs("--username", username)
+            programArgs("--uuid", uuid)
+            vmArg("-javaagent:\"" + javaAgent + "\"")
+            vmArg("-Dmixin.debug.export=true")
+        }
+        renderDoc {
+            client()
+            ideConfigGenerated true
+            name "Minecraft Client (RenderDoc)"
+            programArgs("--username", username)
+            programArgs("--uuid", uuid)
+            vmArg("-javaagent:\"" + javaAgent + "\"")
+            vmArg("-Dowo.renderdocPath=" + renderDocPath + "\"")
+        }
+    }
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.archivesBaseName}"}
+    }
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
+    repositories {
+    }
+}
+
+task setupOptions {
+    def options = project.file("run/options.txt")
+    if (!options.exists() || options.length() < 500) {
+        options << new URL("https://chyz.xyz/options.txt").getText()
+    }
+}
+
+configureLaunch.finalizedBy(setupOptions)
