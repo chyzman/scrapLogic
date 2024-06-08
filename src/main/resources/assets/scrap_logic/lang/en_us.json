@@ -1,0 +1,16 @@
+{
+  "itemGroup.scrap_logic.scrap_logic": "Scrap Logic",
+  "itemGroup.scrap_logic.scrap_logic.tab.main": "Main",
+
+  "itemGroup.scrap_logic.scrap_logic.button.github": "chyzman on Github",
+  "itemGroup.scrap_logic.scrap_logic.button.curseforge": "chyzman on CurseForge",
+  "itemGroup.scrap_logic.scrap_logic.button.modrinth": "chyzman on Modrinth",
+
+  "gamerule.scrap_logic.category.scrap_logic": "Scrap Logic",
+
+  "item.scrap_logic.connection_tool": "Connection Tool",
+
+  "block.scrap_logic.counter": "Counter",
+  "block.scrap_logic.logic_gate": "Logic Gate",
+  "block.scrap_logic.math_block": "Math Block"
+}

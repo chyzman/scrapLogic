@@ -22,6 +22,9 @@
     ],
     "main": [
       "com.chyzman.scraplogic.ScrapLogic"
+    ],
+    "cardinal-components": [
+      "com.chyzman.scraplogic.registry.ComponentInit"
     ]
   },
 
@@ -37,7 +40,7 @@
 
   "custom": {
     "cardinal-components": [
-      "scrap_logic:chunk"
+      "scrap_logic:world"
     ]
   },
   "accessWidener" : "scraplogic.accesswidener"

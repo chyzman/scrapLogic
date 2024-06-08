@@ -1,4 +1,4 @@
-package com.chyzman.scraplogic.block.impl.counter;
+package com.chyzman.scraplogic.block.impl.math;
 
 import com.chyzman.scraplogic.block.template.TickedBlockEntity;
 import com.chyzman.scraplogic.block.template.logic.LogicBlock;
@@ -11,22 +11,21 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class CounterBlock extends LogicBlock {
+public class MathBlock extends LogicBlock {
 
-    public CounterBlock(Settings settings) {
+    public MathBlock(Settings settings) {
         super(settings);
     }
 
     @Nullable
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new CounterBlockEntity(pos, state);
+        return new MathBlockEntity(pos, state);
     }
-
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return validateTicker(type, ScrapLogicBlocks.Entities.COUNTER_BLOCK_ENTITY, TickedBlockEntity.ticker());
+        return validateTicker(type, ScrapLogicBlocks.Entities.MATH_BLOCK_ENTITY, TickedBlockEntity.ticker());
     }
 }

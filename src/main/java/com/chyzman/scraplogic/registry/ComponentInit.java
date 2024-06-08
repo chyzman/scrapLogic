@@ -1,16 +1,21 @@
 package com.chyzman.scraplogic.registry;
 
-import org.ladysnake.cca.api.v3.chunk.ChunkComponentFactoryRegistry;
-import org.ladysnake.cca.api.v3.chunk.ChunkComponentInitializer;
+import com.chyzman.scraplogic.component.ScrapLogicWorldComponent;
+import org.ladysnake.cca.api.v3.component.ComponentKey;
 import org.ladysnake.cca.api.v3.component.ComponentRegistry;
+import org.ladysnake.cca.api.v3.world.WorldComponentFactoryRegistry;
+import org.ladysnake.cca.api.v3.world.WorldComponentInitializer;
 
-public class ComponentInit implements ChunkComponentInitializer {
+import static com.chyzman.scraplogic.util.ScrapLogicRegistryHelper.id;
 
-    public static final ComponentKey<InternalsChunkComponent> INTERNALS_CHUNK = ComponentRegistry.getOrCreate(id("internals_chunk"), InternalsChunkComponent.class);
+public class ComponentInit implements WorldComponentInitializer {
+
+    public static final ComponentKey<ScrapLogicWorldComponent> SCRAP_LOGIC_WORLD = ComponentRegistry.getOrCreate(id("world"), ScrapLogicWorldComponent.class);
 
 
     @Override
-    public void registerChunkComponentFactories(ChunkComponentFactoryRegistry registry) {
+    public void registerWorldComponentFactories(WorldComponentFactoryRegistry registry) {
+        registry.register(SCRAP_LOGIC_WORLD, ScrapLogicWorldComponent::new);
 
     }
 }
