@@ -14,45 +14,169 @@ import java.util.stream.Collectors;
 import static com.chyzman.scraplogic.ScrapLogic.MATH_CONTEXT;
 
 public enum MathBlockMode {
-    ADD("add", -1,(inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ZERO, (bigDecimal, bigDecimal2) -> bigDecimal.add(bigDecimal2, mathContext))),
-    SUBTRACT("subtract", -1, (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ZERO, BigDecimal::subtract)),
-    MULTIPLY("multiply", -1, (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ONE, BigDecimal::multiply)),
-    DIVIDE("divide", -1, (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ONE, BigDecimal::divide)),
+    // x: sum of all inputs
+    ADD(
+            "add",
+            (inputs, mathContext) ->
+                    inputs.stream().reduce(BigDecimal.ZERO, (bd, bd2) -> bd.add(bd2, mathContext))
+    ),
+    // 1: -input
+    // x: subtract all inputs from the first input
+    SUBTRACT(
+            "subtract",
+            (inputs, mathContext) ->
+                    inputs.size() == 1 ?
+                            inputs.getFirst().negate() :
+                            inputs.stream().skip(1).reduce(inputs.getFirst(), (bd, bd2) -> bd.subtract(bd2, mathContext))
+    ),
 
-    MOD("mod", 2, (inputs, mathContext) -> inputs.getFirst().remainder(inputs.get(1))),
+    // x: product of all inputs
+    MULTIPLY("multiply", -1,
+            (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ONE, BigDecimal::multiply)
+    ),
+    // 1: 1/input
+    // x: divide the first input by all other inputs
+    DIVIDE("divide", 1,
+            (inputs, mathContext) ->
+                    inputs.getFirst().compareTo(BigDecimal.ZERO) > 0 ?
+                            inputs.size() == 1 ?
+                                    BigDecimal.ONE.divide(inputs.getFirst(), mathContext) :
+                                    inputs.stream().skip(1).filter(bigDecimal -> bigDecimal.compareTo(BigDecimal.ZERO) != 0).reduce(inputs.getFirst(), (bd, bd2) -> bd.divide(bd2, mathContext)) :
+                            BigDecimal.ZERO
+    ),
 
-    POW("pow", -1,(inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ONE, (a, b) -> BigDecimalMath.pow(a, b, mathContext))),
-    LOG("log", 2, (inputs, mathContext) -> BigDecimalMath.log(inputs.getFirst(), mathContext)),
-    ROOT("root", 2, (inputs, mathContext) -> BigDecimalMath.root(inputs.getFirst(), inputs.get(1), mathContext)),
+    // x: remainder of the first input divided by the second input divided by the third input...
+    MOD("mod", 2,
+            (inputs, mathContext) -> inputs.stream().skip(1).filter(bigDecimal -> bigDecimal.compareTo(BigDecimal.ZERO) > 0).reduce(inputs.getFirst(), (bd, bd2) -> bd.remainder(bd2, mathContext))
+    ),
 
-    ABS("abs", 1, (inputs, mathContext) -> inputs.getFirst().abs()),
-    FACTORIAL("factorial", 1, (inputs, mathContext) -> BigDecimalMath.factorial(inputs.getFirst(), mathContext)),
+    // 1: input^2
+    // 2: first input to the power of the all other inputs
+    POW(
+            "pow",
+            (inputs, mathContext) -> inputs.size() == 1 ?
+                    inputs.getFirst().pow(2, mathContext) :
+                    inputs.stream().skip(1).reduce(inputs.getFirst(), (bd, bd2) -> BigDecimalMath.pow(bd, bd2, mathContext))
+    ),
+    // 1: natural log of input
+    // x: log base last input of log base second to last input of log base third to last input...
+    LOG(
+            "log",
+            (inputs, mathContext) ->
+                    inputs.getFirst().compareTo(BigDecimal.ZERO) > 0 ?
+                            inputs.size() == 1 ?
+                                    BigDecimalMath.log(inputs.getFirst(), mathContext) :
+                                    inputs.stream().skip(1).filter(bigDecimal -> bigDecimal.compareTo(BigDecimal.ZERO) > 0).reduce(inputs.getFirst(), (bd, bd2) -> BigDecimalMath.log(bd, mathContext).divide(BigDecimalMath.log(bd2, mathContext), mathContext)) :
+                            BigDecimal.ZERO
+    ),
+    // 1: sqrt(input)
+    // x: first input to the root of the second input to the root of the third input...
+    ROOT(
+            "root",
+            (inputs, mathContext) -> inputs.size() == 1 ?
+                    BigDecimalMath.sqrt(inputs.getFirst(), mathContext) :
+                    inputs.stream().skip(1).reduce(inputs.getFirst(), (bd, bd2) -> BigDecimalMath.root(bd, bd2, mathContext))
+    ),
 
-    SIN("sin", 1, (inputs, mathContext) -> BigDecimalMath.sin(inputs.getFirst(), mathContext)),
-    COS("cos", 1, (inputs, mathContext) -> BigDecimalMath.cos(inputs.getFirst(), mathContext)),
-    TAN("tan", 1, (inputs, mathContext) -> BigDecimalMath.tan(inputs.getFirst(), mathContext)),
+    // 1: abs(input)
+    ABS("abs", 1, 1,
+            (inputs, mathContext) -> inputs.getFirst().abs()
+    ),
 
-    ASIN("asin", 1, (inputs, mathContext) -> BigDecimalMath.asin(inputs.getFirst(), mathContext)),
-    ACOS("acos", 1, (inputs, mathContext) -> BigDecimalMath.acos(inputs.getFirst(), mathContext)),
-    ATAN("atan", 1, (inputs, mathContext) -> BigDecimalMath.atan(inputs.getFirst(), mathContext)),
+    // 1: !input
+    FACTORIAL("factorial", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.factorial(inputs.getFirst().intValue())
+    ),
 
-    SINH("sinh", 1, (inputs, mathContext) -> BigDecimalMath.sinh(inputs.getFirst(), mathContext)),
-    COSH("cosh", 1, (inputs, mathContext) -> BigDecimalMath.cosh(inputs.getFirst(), mathContext)),
-    TANH("tanh", 1, (inputs, mathContext) -> BigDecimalMath.tanh(inputs.getFirst(), mathContext)),
+    // 1: sin(input)
+    SIN("sin", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.sin(inputs.getFirst(), mathContext)
+    ),
+    // 1: cos(input)
+    COS("cos", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.cos(inputs.getFirst(), mathContext)
+    ),
+    // 1: tan(input)
+    TAN("tan", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.tan(inputs.getFirst(), mathContext)
+    ),
 
-    ASINH("asinh", 1, (inputs, mathContext) -> BigDecimalMath.asinh(inputs.getFirst(), mathContext)),
-    ACOSH("acosh", 1, (inputs, mathContext) -> BigDecimalMath.acosh(inputs.getFirst(), mathContext)),
-    ATANH("atanh", 1, (inputs, mathContext) -> BigDecimalMath.atanh(inputs.getFirst(), mathContext)),
+    // 1: asin(input)
+    ASIN("asin", 1, 1,
+            (inputs, mathContext) ->
+                    (inputs.getFirst().compareTo(BigDecimal.ZERO) >= 0 && inputs.getFirst().compareTo(BigDecimal.ONE) <= 0) ?
+                            BigDecimalMath.asin(inputs.getFirst(), mathContext) :
+                            BigDecimal.ZERO
+    ),
+    // 1: acos(input)
+    ACOS("acos", 1, 1,
+            (inputs, mathContext) ->
+                    (inputs.getFirst().compareTo(BigDecimal.ZERO) >= 0 && inputs.getFirst().compareTo(BigDecimal.ONE) <= 0) ?
+                            BigDecimalMath.acos(inputs.getFirst(), mathContext) :
+                            BigDecimal.ZERO
+    ),
+    // 1: atan(input)
+    ATAN("atan", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.atan(inputs.getFirst(), mathContext)
+    ),
 
-    MAX("max", -1, (inputs, mathContext) -> inputs.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO)),
-    MIN("min", -1, (inputs, mathContext) -> inputs.stream().min(BigDecimal::compareTo).orElse(BigDecimal.ZERO)),
+    // 1: sinh(input)
+    SINH("sinh", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.sinh(inputs.getFirst(), mathContext)
+    ),
+    // 1: cosh(input)
+    COSH("cosh", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.cosh(inputs.getFirst(), mathContext)
+    ),
+    // 1: tanh(input)
+    TANH("tanh", 1, 1,
+            (inputs, mathContext) -> BigDecimalMath.tanh(inputs.getFirst(), mathContext)
+    ),
 
-    MEAN("mean", -1, (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ZERO, (bigDecimal, bigDecimal2) -> bigDecimal.add(bigDecimal2, mathContext)).divide(BigDecimal.valueOf(inputs.size()), mathContext)),
+    // 1: asinh(input)
+    ASINH("asinh", 1, 1,
+            (inputs, mathContext) ->
+                    inputs.getFirst().compareTo(BigDecimal.ONE) >= 0 ?
+                            BigDecimalMath.asinh(inputs.getFirst(), mathContext) :
+                            BigDecimal.ZERO
+    ),
+    // 1: acosh(input)
+    ACOSH("acosh", 1, 1,
+            (inputs, mathContext) ->
+                    inputs.getFirst().compareTo(BigDecimal.ONE) >= 0 ?
+                            BigDecimalMath.acosh(inputs.getFirst(), mathContext) :
+                            BigDecimal.ZERO
+    ),
+    // 1: atanh(input)
+    ATANH("atanh", 1, 1,
+            (inputs, mathContext) ->
+                    (inputs.getFirst().compareTo(BigDecimal.ZERO) >= 0 && inputs.getFirst().compareTo(BigDecimal.ONE) <= 0) ?
+                            BigDecimalMath.atanh(inputs.getFirst(), mathContext) :
+                            BigDecimal.ZERO
+    ),
+
+    // x: largest input
+    MAX(
+            "max",
+            (inputs, mathContext) -> inputs.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO)
+    ),
+    // x: smallest input
+    MIN(
+            "min",
+            (inputs, mathContext) -> inputs.stream().min(BigDecimal::compareTo).orElse(BigDecimal.ZERO)
+    ),
+
+    // x: sum of all inputs divided by the number of inputs
+    MEAN("mean", -1,
+            (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ZERO, (bd, bd2) -> bd.add(bd2, mathContext)).divide(BigDecimal.valueOf(inputs.size()), mathContext)
+    ),
+    // x: middle value of all inputs
     MEDIAN("median", -1, (inputs, mathContext) -> {
         var sorted = inputs.stream().sorted().toList();
         var size = sorted.size();
         return size % 2 == 0 ? sorted.get(size / 2).add(sorted.get(size / 2 - 1), mathContext).divide(BigDecimal.TWO, mathContext) : sorted.get(size / 2);
     }),
+    // x: most common value of all inputs
     MODE("mode", -1, (inputs, mathContext) -> {
         var map = inputs.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         var max = map.values().stream().max(Long::compareTo).orElse(0L);
@@ -60,16 +184,40 @@ public enum MathBlockMode {
     });
 
     public final String name;
-    public final int requiredInputs;
+    public final int minInputs;
+    public final int maxInputs;
     private final BiFunction<List<BigDecimal>, MathContext, BigDecimal> function;
 
-    MathBlockMode(String name, int requiredInputs, BiFunction<List<BigDecimal>, MathContext, BigDecimal> function) {
+    MathBlockMode(
+            String name,
+            int minInputs,
+            int maxInputs,
+            BiFunction<List<BigDecimal>, MathContext, BigDecimal> function
+    ) {
         this.name = name;
-        this.requiredInputs = requiredInputs;
+        this.minInputs = minInputs;
+        this.maxInputs = maxInputs;
         this.function = function;
     }
 
+    MathBlockMode(
+            String name, int minInputs, BiFunction<List<BigDecimal>, MathContext, BigDecimal> function
+    ) {
+        this(name, minInputs, -1, function);
+    }
+
+    MathBlockMode(
+            String name, BiFunction<List<BigDecimal>, MathContext, BigDecimal> function
+    ) {
+        this(name, 1, function);
+    }
+
+
     public BigDecimal calculate(World world, List<BigDecimal> inputs) {
-        return inputs.isEmpty() || (requiredInputs >= 0 && inputs.size() != requiredInputs) ? BigDecimal.ZERO : function.apply(inputs, MATH_CONTEXT);
+        try {
+            return inputs.isEmpty() || (minInputs >= 0 && inputs.size() < minInputs) || (maxInputs >= 0 && inputs.size() > maxInputs) ? BigDecimal.ZERO : function.apply(inputs, MATH_CONTEXT);
+        } catch (Exception ignored) {
+            return BigDecimal.ZERO;
+        }
     }
 }

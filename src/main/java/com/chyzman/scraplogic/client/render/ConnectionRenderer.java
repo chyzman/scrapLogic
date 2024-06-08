@@ -11,6 +11,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
@@ -166,7 +167,8 @@ public class ConnectionRenderer {
             var client = MinecraftClient.getInstance();
             var mainHandStack = client.player.getMainHandStack();
             var offHandStack = client.player.getOffHandStack();
-            if (!mainHandStack.isIn(DISPLAYS_CONNECTIONS_TAG) && !offHandStack.isIn(DISPLAYS_CONNECTIONS_TAG)) return;
+            var headStack = client.player.getEquippedStack(EquipmentSlot.HEAD);
+            if (!mainHandStack.isIn(DISPLAYS_CONNECTIONS_TAG) && !offHandStack.isIn(DISPLAYS_CONNECTIONS_TAG) && !headStack.isIn(DISPLAYS_CONNECTIONS_TAG)) return;
 
             var matrices = context.matrixStack();
             var camera = context.camera().getPos();
