@@ -5,6 +5,7 @@ import net.minecraft.world.World;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -155,6 +156,11 @@ public enum MathBlockMode {
                             BigDecimal.ZERO
     ),
 
+    // 1: input in degrees
+    DEGREES("degrees", 1, 1,
+            (inputs, mathContext) -> inputs.getFirst().multiply(BigDecimal.valueOf(180)).divide(BigDecimalMath.pi(mathContext), mathContext)
+    ),
+
     // x: largest input
     MAX(
             "max",
@@ -167,21 +173,48 @@ public enum MathBlockMode {
     ),
 
     // x: sum of all inputs divided by the number of inputs
-    MEAN("mean", -1,
+    MEAN("mean",
             (inputs, mathContext) -> inputs.stream().reduce(BigDecimal.ZERO, (bd, bd2) -> bd.add(bd2, mathContext)).divide(BigDecimal.valueOf(inputs.size()), mathContext)
     ),
     // x: middle value of all inputs
-    MEDIAN("median", -1, (inputs, mathContext) -> {
+    MEDIAN("median", (inputs, mathContext) -> {
         var sorted = inputs.stream().sorted().toList();
         var size = sorted.size();
         return size % 2 == 0 ? sorted.get(size / 2).add(sorted.get(size / 2 - 1), mathContext).divide(BigDecimal.TWO, mathContext) : sorted.get(size / 2);
     }),
     // x: most common value of all inputs
-    MODE("mode", -1, (inputs, mathContext) -> {
+    MODE("mode", (inputs, mathContext) -> {
         var map = inputs.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         var max = map.values().stream().max(Long::compareTo).orElse(0L);
         return map.entrySet().stream().filter(e -> e.getValue().equals(max)).map(Map.Entry::getKey).findFirst().orElse(BigDecimal.ZERO);
-    });
+    }),
+
+    // 1: round(input)
+    // 2: round input to the nearest multiple of the second input
+    ROUND("round", 1, 2,
+            (inputs, mathContext) -> inputs.size() == 1 ?
+                    inputs.getFirst().round(mathContext) :
+                    inputs.getFirst().divide(inputs.get(1), mathContext).setScale(0, RoundingMode.HALF_UP).multiply(inputs.get(1))
+    ),
+    // 1: floor(input)
+    // 2: floor input to the nearest multiple of the second input
+    FLOOR("floor", 1, 2,
+            (inputs, mathContext) -> inputs.size() == 1 ?
+                    inputs.getFirst().setScale(0, RoundingMode.FLOOR) :
+                    inputs.getFirst().divide(inputs.get(1), mathContext).setScale(0, RoundingMode.FLOOR).multiply(inputs.get(1))
+    ),
+    // 1: ceil(input)
+    // 2: ceil input to the nearest multiple of the second input
+    CEIL("ceil", 1, 2,
+            (inputs, mathContext) -> inputs.size() == 1 ?
+                    inputs.getFirst().setScale(0, RoundingMode.CEILING) :
+                    inputs.getFirst().divide(inputs.get(1), mathContext).setScale(0, RoundingMode.CEILING).multiply(inputs.get(1))
+    ),
+
+
+
+
+    ;
 
     public final String name;
     public final int minInputs;
