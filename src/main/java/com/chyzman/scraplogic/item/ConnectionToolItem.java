@@ -1,6 +1,7 @@
 package com.chyzman.scraplogic.item;
 
 import com.chyzman.scraplogic.block.template.logic.LogicBlock;
+import com.chyzman.scraplogic.item.component.ConnectionToolMode;
 import com.chyzman.scraplogic.item.component.PartialConnectionComponent;
 import com.chyzman.scraplogic.item.template.ClickOverrider;
 import com.chyzman.scraplogic.item.template.ConnectionDirection;
@@ -23,13 +24,11 @@ public class ConnectionToolItem extends Item implements ClickOverrider {
     @Override
     public ActionResult onClick(ConnectionDirection direction, PlayerEntity player, World world, Hand hand, BlockPos pos) {
         var stack = player.getStackInHand(hand);
+        var mode = stack.getComponents().getOrDefault(ScrapLogicDataComponents.CONNECTION_TOOL_MODE, ConnectionToolMode.ADD);
+        if (mode != ConnectionToolMode.ADD) {
+            return ActionResult.FAIL;
+        }
         var partialConnection = stack.getComponents().getOrDefault(ScrapLogicDataComponents.PARTIAL_CONNECTION, new PartialConnectionComponent(world.getRegistryKey()));
-//        if (!(world.getBlockState(pos).getBlock() instanceof LogicBlock)) {
-//            if (world.isClient) {
-//                ClickOverrider.endClicks();
-//            }
-//            return ActionResult.FAIL;
-//        }
         if (partialConnection.canAdd(pos, world, direction)) {
             if (!world.isClient) {
                 stack.set(ScrapLogicDataComponents.PARTIAL_CONNECTION, partialConnection.addPosition(world, pos, direction));
